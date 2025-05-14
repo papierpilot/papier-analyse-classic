@@ -11,7 +11,7 @@ BRAUN_MAX = np.array([30, 255, 255])
 WEISS_MIN = np.array([0, 0, 180])
 WEISS_MAX = np.array([180, 50, 255])
 
-# Region of Interest (Papierhaufen)
+# ROI-Schwellen (Papierhaufen erkennen)
 ROI_MIN = np.array([0, 0, 60])
 ROI_MAX = np.array([180, 80, 255])
 
@@ -39,42 +39,43 @@ def analysiere_bild(pil_bild):
     weiss_prozent = weiss_px / relevant * 100
     return braun_prozent, weiss_prozent
 
-# Streamlit Konfiguration
+# 🟢 Streamlit UI
 st.set_page_config(page_title="📦📄 AVG Papieranalyse", layout="centered")
 
-# Logo anzeigen
-st.image("1LOGO_AVG_FINAL_2013_RZ_2000.jpg", width=200)
+# Logo anzeigen (halb so groß)
+st.image("1LOGO_AVG_FINAL_2013_RZ_2000.jpg", width=100)
 
-# Titel
+# Titel und Beschreibung
 st.title("📦📸 AVG Papieranalyse")
 st.write("Bitte lade **genau 5 Bilder** hoch – wir analysieren den Anteil an Karton und Zeitung.")
 
-# Bild-Upload
+# Datei-Uploader
 bilder = st.file_uploader("📷 Bilder auswählen", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
-if bilder:
-    if len(bilder) == 5:
-        gesamt_braun = 0
-        gesamt_weiss = 0
+# Analyse nur wenn genau 5 Bilder vorhanden sind
+if bilder and len(bilder) == 5:
+    gesamt_braun = 0
+    gesamt_weiss = 0
 
-        for datei in bilder:
-            bild = Image.open(datei)
-            b, w = analysiere_bild(bild)
-            gesamt_braun += b
-            gesamt_weiss += w
-            st.write(f"🖼️ **{datei.name}** → Karton: {b:.1f} %, Zeitung: {w:.1f} %")
+    for datei in bilder:
+        bild = Image.open(datei)
+        b, w = analysiere_bild(bild)
+        gesamt_braun += b
+        gesamt_weiss += w
+        st.write(f"🖼️ **{datei.name}** → Karton: {b:.1f} %, Zeitung: {w:.1f} %")
 
-        mittel_braun = gesamt_braun / 5
-        mittel_weiss = gesamt_weiss / 5
+    mittel_braun = gesamt_braun / 5
+    mittel_weiss = gesamt_weiss / 5
 
-        st.markdown("### 📊 Durchschnitt:")
-        st.success(f"📦 Karton: **{mittel_braun:.1f} %**, 📰 Zeitung: **{mittel_weiss:.1f} %**")
+    st.markdown("### 📊 Durchschnitt:")
+    st.success(f"📦 Karton: **{mittel_braun:.1f} %**, 📰 Zeitung: **{mittel_weiss:.1f} %**")
 
-        if mittel_braun > 49:
-            st.success("✅ Empfehlung: **Verpressen**")
-        else:
-            st.warning("⚠️ Empfehlung: **Sortieren**")
+    if mittel_braun > 49:
+        st.success("✅ Empfehlung: **Verpressen**")
     else:
-        st.warning(f"⚠️ Du hast **{len(bilder)}** Bilder hochgeladen – bitte lade **genau 5** Bilder hoch.")
+        st.warning("⚠️ Empfehlung: **Sortieren**")
+
+elif bilder and len(bilder) != 5:
+    st.error("❌ Bitte lade **genau 5 Bilder** hoch, um die Analyse zu starten.")
 else:
-    st.info("⬆️ Bitte lade **genau 5 Bilder** hoch, um die Analyse zu starten.")
+    st.info("Bitte wähle 5 Bilder aus.")
