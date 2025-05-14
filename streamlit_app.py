@@ -2,9 +2,8 @@ import streamlit as st
 import numpy as np
 import cv2
 from PIL import Image
-import platform
 
-# 📦 Farbdefinitionen
+# Farbdefinitionen (HSV)
 BRAUN_MIN = np.array([10, 50, 50])
 BRAUN_MAX = np.array([30, 255, 255])
 WEISS_MIN = np.array([0, 0, 180])
@@ -12,7 +11,7 @@ WEISS_MAX = np.array([180, 50, 255])
 ROI_MIN = np.array([0, 0, 60])
 ROI_MAX = np.array([180, 80, 255])
 
-# 🔬 Analyse
+# Analysefunktion
 def analysiere_bild(pil_bild):
     img = np.array(pil_bild.convert("RGB"))
     img_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
@@ -29,32 +28,27 @@ def analysiere_bild(pil_bild):
     if relevant == 0:
         return 0.0, 0.0
 
-    braun_quote = np.count_nonzero(braun_im_roi) / relevant * 100
-    weiss_quote = np.count_nonzero(weiss_im_roi) / relevant * 100
-    return braun_quote, weiss_quote
+    braun_prozent = np.count_nonzero(braun_im_roi) / relevant * 100
+    weiss_prozent = np.count_nonzero(weiss_im_roi) / relevant * 100
+    return braun_prozent, weiss_prozent
 
-# 🧭 Streamlit Setup
+# Streamlit UI
 st.set_page_config(page_title="AVG Papieranalyse", layout="centered")
 st.title("📦📸 AVG Papieranalyse")
 
-st.markdown("Bitte zuerst das **Kennzeichen fotografieren** – danach **genau 5 Bilder** zur Analyse hochladen.")
+# Kennzeichenfoto erfassen
+st.markdown("### 📷 Schritt 1: Kennzeichen fotografieren")
+kennzeichen_bild = st.camera_input("Bitte fotografiere das Kennzeichen")
 
-# 📷 Nur auf Mobilgeräten Kamera aktivieren
-is_mobile = st.user_agent and "Mobile" in st.user_agent.device or "Android" in st.user_agent.device or "iPhone" in st.user_agent.device
-kennzeichen_bild = None
-
-if is_mobile:
-    kennzeichen_bild = st.camera_input("📷 Kennzeichen fotografieren")
-else:
-    st.warning("📱 Bitte öffne diese Seite auf einem **mobilen Gerät**, um das Kennzeichen zu fotografieren.")
-
-# 🔁 Wenn Kennzeichen erfasst
 if kennzeichen_bild:
-    st.success("✅ Kennzeichenbild erfasst. Jetzt 5 Bilder zur Analyse auswählen.")
-    bilder = st.file_uploader("📁 Genau 5 Analysebilder hochladen", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
+    st.success("✅ Kennzeichenbild gespeichert.")
+    
+    st.markdown("### 📁 Schritt 2: 5 Bilder der Ladung hochladen")
+    bilder = st.file_uploader("Bitte genau 5 Bilder auswählen", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
     if bilder and len(bilder) != 5:
-        st.warning("⚠️ Du musst **genau 5 Bilder** hochladen.")
+        st.warning("⚠️ Du musst genau 5 Bilder hochladen.")
+    
     elif bilder and len(bilder) == 5:
         gesamt_braun = 0
         gesamt_weiss = 0
@@ -64,7 +58,7 @@ if kennzeichen_bild:
             b, w = analysiere_bild(img)
             gesamt_braun += b
             gesamt_weiss += w
-            st.write(f"🖼️ **{bild.name}** → Karton: {b:.1f} %, Zeitung: {w:.1f} %")
+            st.write(f"🖼️ {bild.name} → Karton: {b:.1f} %, Zeitung: {w:.1f} %")
 
         mittel_braun = gesamt_braun / 5
         mittel_weiss = gesamt_weiss / 5
@@ -77,4 +71,4 @@ if kennzeichen_bild:
         else:
             st.warning("⚠️ Empfehlung: **Sortieren**")
 else:
-    st.info("⬆️ Bitte zuerst das Kennzeichen erfassen (nur auf dem Handy möglich).")
+    st.info("⬆️ Bitte zuerst das Kennzeichen fotografieren.")
