@@ -46,30 +46,29 @@ st.write("Bitte lade **genau 5 Bilder** hoch – wir analysieren den Anteil an K
 
 bilder = st.file_uploader("📷 Bilder auswählen", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
-if bilder and len(bilder) == 5:
-    gesamt_braun = 0
-    gesamt_weiss = 0
+if bilder:
+    if len(bilder) == 5:
+        gesamt_braun = 0
+        gesamt_weiss = 0
 
-    for datei in bilder:
-        bild = Image.open(datei)
-        b, w = analysiere_bild(bild)
-        gesamt_braun += b
-        gesamt_weiss += w
-        st.write(f"🖼️ **{datei.name}** → Karton: {b:.1f} %, Zeitung: {w:.1f} %")
+        for datei in bilder:
+            bild = Image.open(datei)
+            b, w = analysiere_bild(bild)
+            gesamt_braun += b
+            gesamt_weiss += w
+            st.write(f"🖼️ **{datei.name}** → Karton: {b:.1f} %, Zeitung: {w:.1f} %")
 
-    mittel_braun = gesamt_braun / 5
-    mittel_weiss = gesamt_weiss / 5
+        mittel_braun = gesamt_braun / 5
+        mittel_weiss = gesamt_weiss / 5
 
-    st.markdown("### 📊 Durchschnitt:")
-    st.success(f"📦 Karton: **{mittel_braun:.1f} %**, 📰 Zeitung: **{mittel_weiss:.1f} %**")
+        st.markdown("### 📊 Durchschnitt:")
+        st.success(f"📦 Karton: **{mittel_braun:.1f} %**, 📰 Zeitung: **{mittel_weiss:.1f} %**")
 
-    # Entscheidungslogik geändert auf > 49 %
-    if mittel_braun > 49:
-        st.success("✅ Empfehlung: **Verpressen**")
+        if mittel_braun > 49:
+            st.success("✅ Empfehlung: **Verpressen**")
+        else:
+            st.warning("⚠️ Empfehlung: **Sortieren**")
     else:
-        st.warning("⚠️ Empfehlung: **Sortieren**")
-
-elif bilder and len(bilder) != 5:
-    st.warning(f"Du hast **{len(bilder)}** Bilder hochgeladen – bitte genau 5.")
+        st.warning(f"⚠️ Du hast **{len(bilder)}** Bilder hochgeladen – bitte lade **genau 5** Bilder hoch.")
 else:
-    st.info("Bitte lade genau 5 Bilder hoch.")
+    st.info("⬆️ Bitte lade **genau 5 Bilder** hoch, um die Analyse zu starten.")
