@@ -39,11 +39,17 @@ def analysiere_bild(pil_bild):
     weiss_prozent = weiss_px / relevant * 100
     return braun_prozent, weiss_prozent
 
-# Streamlit Oberfläche
+# Streamlit Konfiguration
 st.set_page_config(page_title="📦📄 AVG Papieranalyse", layout="centered")
+
+# Logo anzeigen
+st.image("1LOGO_AVG_FINAL_2013_RZ_2000.jpg", width=200)
+
+# Titel
 st.title("📦📸 AVG Papieranalyse")
 st.write("Bitte lade **genau 5 Bilder** hoch – wir analysieren den Anteil an Karton und Zeitung.")
 
+# Bild-Upload
 bilder = st.file_uploader("📷 Bilder auswählen", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
 if bilder:
