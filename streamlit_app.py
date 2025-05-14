@@ -39,16 +39,14 @@ def analysiere_bild(pil_bild):
     weiss_prozent = weiss_px / relevant * 100
     return braun_prozent, weiss_prozent
 
-# 🟢 Streamlit UI
-st.set_page_config(page_title="📦📄 Farb-Analyse", layout="centered")
+# Streamlit Oberfläche
+st.set_page_config(page_title="📦📄 Klassische Papieranalyse", layout="centered")
 st.title("📦📸 Klassische Papieranalyse")
 st.write("Bitte lade **genau 5 Bilder** hoch – wir analysieren den Anteil an Karton und Zeitung.")
 
 bilder = st.file_uploader("📷 Bilder auswählen", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
 if bilder and len(bilder) == 5:
-    st.success("5 Bilder erhalten – starte Analyse...")
-
     gesamt_braun = 0
     gesamt_weiss = 0
 
@@ -65,12 +63,13 @@ if bilder and len(bilder) == 5:
     st.markdown("### 📊 Durchschnitt:")
     st.success(f"📦 Karton: **{mittel_braun:.1f} %**, 📰 Zeitung: **{mittel_weiss:.1f} %**")
 
-    if mittel_braun >= 60:
+    # Entscheidungslogik geändert auf > 49 %
+    if mittel_braun > 49:
         st.success("✅ Empfehlung: **Verpressen**")
     else:
         st.warning("⚠️ Empfehlung: **Sortieren**")
 
-elif bilder:
-    st.error("❌ Bitte lade **genau 5 Bilder** hoch, um die Analyse zu starten.")
+elif bilder and len(bilder) != 5:
+    st.warning(f"Du hast **{len(bilder)}** Bilder hochgeladen – bitte genau 5.")
 else:
-    st.info("Bitte lade mindestens 1 Bild hoch.")
+    st.info("Bitte lade genau 5 Bilder hoch.")
