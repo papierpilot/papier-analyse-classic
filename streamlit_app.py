@@ -3,15 +3,15 @@ import numpy as np
 import cv2
 from PIL import Image
 
-# Farbwerte für Karton (braun)
+# HSV-Schwellen für Karton (braun)
 BRAUN_MIN = np.array([10, 50, 50])
 BRAUN_MAX = np.array([30, 255, 255])
 
-# Farbwerte für Zeitung (weiß)
+# HSV-Schwellen für Zeitung (weiß)
 WEISS_MIN = np.array([0, 0, 180])
 WEISS_MAX = np.array([180, 50, 255])
 
-# Region of Interest (ROI): Papierhaufen erkennen
+# Region of Interest (Papierhaufen)
 ROI_MIN = np.array([0, 0, 60])
 ROI_MAX = np.array([180, 80, 255])
 
@@ -39,14 +39,16 @@ def analysiere_bild(pil_bild):
     weiss_prozent = weiss_px / relevant * 100
     return braun_prozent, weiss_prozent
 
-# UI
-st.set_page_config(page_title="📦 Klassische Papier-Analyse", layout="centered")
-st.title("📦📄 Farbwertbasierte Analyse")
-st.write("Lade mehrere Bilder hoch und erhalte eine Schätzung des Anteils von Karton und Zeitung.")
+# 🟢 Streamlit UI
+st.set_page_config(page_title="📦📄 Farb-Analyse", layout="centered")
+st.title("📦📸 Klassische Papieranalyse")
+st.write("Bitte lade **genau 5 Bilder** hoch – wir analysieren den Anteil an Karton und Zeitung.")
 
 bilder = st.file_uploader("📷 Bilder auswählen", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
-if bilder:
+if bilder and len(bilder) == 5:
+    st.success("5 Bilder erhalten – starte Analyse...")
+
     gesamt_braun = 0
     gesamt_weiss = 0
 
@@ -55,18 +57,20 @@ if bilder:
         b, w = analysiere_bild(bild)
         gesamt_braun += b
         gesamt_weiss += w
-        st.write(f"🖼️ {datei.name} → 📦 Karton: {b:.1f} %, 📰 Zeitung: {w:.1f} %")
+        st.write(f"🖼️ **{datei.name}** → Karton: {b:.1f} %, Zeitung: {w:.1f} %")
 
-    anzahl = len(bilder)
-    mittel_braun = gesamt_braun / anzahl
-    mittel_weiss = gesamt_weiss / anzahl
+    mittel_braun = gesamt_braun / 5
+    mittel_weiss = gesamt_weiss / 5
 
-    st.markdown("### 📊 Durchschnittswerte:")
+    st.markdown("### 📊 Durchschnitt:")
     st.success(f"📦 Karton: **{mittel_braun:.1f} %**, 📰 Zeitung: **{mittel_weiss:.1f} %**")
 
     if mittel_braun >= 60:
         st.success("✅ Empfehlung: **Verpressen**")
     else:
         st.warning("⚠️ Empfehlung: **Sortieren**")
+
+elif bilder:
+    st.error("❌ Bitte lade **genau 5 Bilder** hoch, um die Analyse zu starten.")
 else:
     st.info("Bitte lade mindestens 1 Bild hoch.")
