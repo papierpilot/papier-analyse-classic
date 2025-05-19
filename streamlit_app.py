@@ -86,7 +86,12 @@ if kennzeichen_bild:
             st.warning("⚠️ Kein gültiges Kennzeichen erkannt. Bitte erneut fotografieren.")
             st.stop()
     else:
-        st.info("ℹ️ Kennzeichenerkennung ist in dieser Umgebung nicht verfügbar. Bitte manuell prüfen.")
+        st.info("ℹ️ Kennzeichenerkennung ist in dieser Umgebung nicht verfügbar.")
+        manuell_ok = st.checkbox("✅ Ich habe das Bild überprüft, das Kennzeichen ist sichtbar und korrekt.")
+
+        if not manuell_ok:
+            st.warning("⚠️ Bitte bestätige, dass das Kennzeichen korrekt ist, bevor du fortfährst.")
+            st.stop()
 
     # Schritt 2: Bilder der Ladung hochladen
     st.markdown("### 📁 Schritt 2: 5 Bilder der Ladung hochladen")
