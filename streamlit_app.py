@@ -4,17 +4,17 @@ import cv2
 from PIL import Image
 import re
 import sys
+import shutil
 
-# OCR-Fallback-Logik
+# OCR-Verfügbarkeit prüfen
 OCR_VERFUEGBAR = False
 try:
-    import pytesseract
-    import shutil
     if shutil.which("tesseract"):
+        import pytesseract
         OCR_VERFUEGBAR = True
 except Exception as e:
+    sys.stderr.write(f"[INFO] OCR-Modul nicht verfügbar: {e}\n")
     OCR_VERFUEGBAR = False
-    sys.stderr.write(f"OCR-Modul konnte nicht geladen werden: {e}\n")
 
 # Farbdefinitionen (HSV)
 BRAUN_MIN = np.array([10, 50, 50])
