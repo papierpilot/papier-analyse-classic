@@ -2,6 +2,8 @@ import streamlit as st
 import numpy as np
 import cv2
 from PIL import Image
+import pytesseract
+import re
 
 # Farbdefinitionen (HSV)
 BRAUN_MIN = np.array([10, 50, 50])
@@ -32,43 +34,71 @@ def analysiere_bild(pil_bild):
     weiss_prozent = np.count_nonzero(weiss_im_roi) / relevant * 100
     return braun_prozent, weiss_prozent
 
+# Kennzeichenerkennung (international, alphanumerisch)
+def enthaelt_kennzeichen(pil_bild):
+    img = np.array(pil_bild.convert("RGB"))
+    graustufen = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    text = pytesseract.image_to_string(graustufen)
+
+    text_zeilen = text.splitlines()
+    zeilen_mit_code = []
+
+    for zeile in text_zeilen:
+        zeile_saeuberlich = re.sub(r'[^A-Za-z0-9]', '', zeile)
+        if len(zeile_saeuberlich) >= 4:
+            zeilen_mit_code.append(zeile_saeuberlich)
+
+    if zeilen_mit_code:
+        return True, zeilen_mit_code[0]
+    return False, None
+
 # Streamlit UI
 st.set_page_config(page_title="AVG Papieranalyse", layout="centered")
 st.title("📦📸 AVG Papieranalyse")
 
-# Kennzeichenfoto erfassen
+# Schritt 1: Kennzeichen erfassen
 st.markdown("### 📷 Schritt 1: Kennzeichen fotografieren")
 kennzeichen_bild = st.camera_input("Bitte fotografiere das Kennzeichen")
 
 if kennzeichen_bild:
-    st.success("✅ Kennzeichenbild gespeichert.")
-    
-    st.markdown("### 📁 Schritt 2: 5 Bilder der Ladung hochladen")
-    bilder = st.file_uploader("Bitte genau 5 Bilder auswählen", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
+    bild = Image.open(kennzeichen_bild)
+    erkannt, kennzeichen = enthaelt_kennzeichen(bild)
 
-    if bilder and len(bilder) != 5:
-        st.warning("⚠️ Du musst genau 5 Bilder hochladen.")
-    
-    elif bilder and len(bilder) == 5:
-        gesamt_braun = 0
-        gesamt_weiss = 0
+    if erkannt:
+        st.success(f"✅ Kennzeichen erkannt: **{kennzeichen}**")
+        # st.image(bild, caption="Kennzeichenbild", use_column_width=True)
+        # st.text_area("📄 Erkannter Text (Debug)", pytesseract.image_to_string(np.array(bild.convert("RGB"))))
 
-        for bild in bilder:
-            img = Image.open(bild)
-            b, w = analysiere_bild(img)
-            gesamt_braun += b
-            gesamt_weiss += w
-            st.write(f"🖼️ {bild.name} → Karton: {b:.1f} %, Zeitung: {w:.1f} %")
+        # Schritt 2: Bilder hochladen
+        st.markdown("### 📁 Schritt 2: 5 Bilder der Ladung hochladen")
+        bilder = st.file_uploader("Bitte genau 5 Bilder auswählen", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
-        mittel_braun = gesamt_braun / 5
-        mittel_weiss = gesamt_weiss / 5
+        if bilder and len(bilder) != 5:
+            st.warning("⚠️ Du musst genau 5 Bilder hochladen.")
 
-        st.markdown("### 📊 Durchschnitt:")
-        st.success(f"📦 Karton: **{mittel_braun:.1f} %**, 📰 Zeitung: **{mittel_weiss:.1f} %**")
+        elif bilder and len(bilder) == 5:
+            gesamt_braun = 0
+            gesamt_weiss = 0
 
-        if mittel_braun >= 49:
-            st.success("✅ Empfehlung: **Verpressen**")
-        else:
-            st.warning("⚠️ Empfehlung: **Sortieren**")
+            for bild in bilder:
+                img = Image.open(bild)
+                b, w = analysiere_bild(img)
+                gesamt_braun += b
+                gesamt_weiss += w
+                st.image(img, caption=bild.name, use_column_width=True)
+                st.write(f"🖼️ {bild.name} → Karton: {b:.1f} %, Zeitung: {w:.1f} %")
+
+            mittel_braun = gesamt_braun / 5
+            mittel_weiss = gesamt_weiss / 5
+
+            st.markdown("### 📊 Durchschnitt:")
+            st.success(f"📦 Karton: **{mittel_braun:.1f} %**, 📰 Zeitung: **{mittel_weiss:.1f} %**")
+
+            if mittel_braun >= 49:
+                st.success("✅ Empfehlung: **Verpressen**")
+            else:
+                st.warning("⚠️ Empfehlung: **Sortieren**")
+    else:
+        st.warning("⚠️ Kein gültiges Kennzeichen erkannt. Bitte erneut fotografieren.")
 else:
     st.info("⬆️ Bitte zuerst das Kennzeichen fotografieren.")
